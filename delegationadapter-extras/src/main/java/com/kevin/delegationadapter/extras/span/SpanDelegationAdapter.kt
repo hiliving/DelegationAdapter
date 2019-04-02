@@ -30,19 +30,18 @@ import com.kevin.delegationadapter.DelegationAdapter
  * @author mender，Modified Date Modify Content:
  */
 
-class SpanDelegationAdapter : DelegationAdapter() {
+open class SpanDelegationAdapter @JvmOverloads constructor(hasConsistItemType: Boolean = false) : DelegationAdapter(hasConsistItemType) {
 
-    override fun onAttachedToRecyclerView(recyclerView: RecyclerView?) {
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
 
-        val layoutManager = recyclerView?.layoutManager
+        val layoutManager = recyclerView.layoutManager
         if (layoutManager is GridLayoutManager) {
 
             layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
                     val delegate = delegatesManager.getDelegate(getItemViewType(position))
-                    return if (null != delegate
-                            && delegate is SpanAdapterDelegate<Any, out RecyclerView.ViewHolder>) {
+                    return if (null != delegate && delegate is SpanAdapterDelegate) {
                         delegate.spanSize
                     } else {
                         layoutManager.spanCount

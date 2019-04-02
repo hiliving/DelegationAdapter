@@ -27,7 +27,7 @@ import java.util.ArrayList
  *         Note: If you modify this class please fill in the following content as a record.
  * @author mender，Modified Date Modify Content:
  */
-open class DelegationAdapter : AbsDelegationAdapter {
+open class DelegationAdapter @JvmOverloads constructor(hasConsistItemType: Boolean = false) : AbsDelegationAdapter(AdapterDelegatesManager(hasConsistItemType)) {
 
     private var dataItems: MutableList<Any> = ArrayList()
     private var headerItems: MutableList<Any> = ArrayList()
@@ -42,11 +42,6 @@ open class DelegationAdapter : AbsDelegationAdapter {
     val footerCount: Int
         get() = footerItems.size
 
-    @JvmOverloads
-    constructor(hasConsistItemType: Boolean = false) : super(AdapterDelegatesManager(hasConsistItemType))
-
-    constructor(delegatesManager: AdapterDelegatesManager) : super(delegatesManager)
-
     fun setHeaderItem(headerItem: Any?) {
         if (headerItem == null) {
             return
@@ -57,7 +52,7 @@ open class DelegationAdapter : AbsDelegationAdapter {
     }
 
     fun setHeaderItems(headerItems: MutableList<*>?) {
-        if (headerItems == null || headerItems.isEmpty()) {
+        if (headerItems == null) {
             return
         }
         this.headerItems.clear()
@@ -82,7 +77,7 @@ open class DelegationAdapter : AbsDelegationAdapter {
     }
 
     fun addHeaderItems(position: Int = headerCount, headerItems: MutableList<*>?) {
-        if (headerItems == null || headerItems.isEmpty()) {
+        if (headerItems == null) {
             return
         }
         this.headerItems.addAll(position, headerItems.filterNotNull())
@@ -99,7 +94,7 @@ open class DelegationAdapter : AbsDelegationAdapter {
     }
 
     fun setFooterItems(footerItems: MutableList<*>?) {
-        if (footerItems == null || footerItems.isEmpty()) {
+        if (footerItems == null) {
             return
         }
         this.footerItems.clear()
@@ -124,7 +119,7 @@ open class DelegationAdapter : AbsDelegationAdapter {
     }
 
     fun addFooterItems(position: Int, footerItems: MutableList<*>?) {
-        if (footerItems == null || footerItems.isEmpty()) {
+        if (footerItems == null) {
             return
         }
         this.footerItems.addAll(position, footerItems.filterNotNull())
@@ -132,7 +127,7 @@ open class DelegationAdapter : AbsDelegationAdapter {
     }
 
     fun setDataItems(dataItems: MutableList<*>?) {
-        if (dataItems == null || dataItems.isEmpty()) {
+        if (dataItems == null) {
             return
         }
         this.dataItems.clear()
@@ -157,7 +152,7 @@ open class DelegationAdapter : AbsDelegationAdapter {
     }
 
     fun addDataItems(position: Int = dataCount, dataItems: MutableList<*>?) {
-        if (dataItems == null || dataItems.isEmpty()) {
+        if (dataItems == null) {
             return
         }
         this.dataItems.addAll(position, dataItems.filterNotNull())
@@ -171,14 +166,25 @@ open class DelegationAdapter : AbsDelegationAdapter {
         notifyItemMoved(fromPosition, moveToPosition)
     }
 
-    fun removeDataItem(dataItem: Any?) {
+    @JvmOverloads
+    fun removeDataItem(dataItem: Any?, tag: String = AdapterDelegate.DEFAULT_TAG) {
         if (dataItem == null) {
             return
         }
-        val index = dataItems.indexOf(dataItem)
-        if (index != -1 && index <= dataCount) {
+
+        val indexes = ArrayList<Int>()
+        dataItems.forEachIndexed { index, item ->
+            if (item is ItemData && dataItem == item.data && tag == item.tag) {
+                indexes.add(index)
+            } else if (dataItem == item) {
+                indexes.add(index)
+            }
+        }
+
+        indexes.forEach { index ->
             removeDataItemAt(index)
         }
+
     }
 
     @JvmOverloads
@@ -187,6 +193,21 @@ open class DelegationAdapter : AbsDelegationAdapter {
             dataItems.removeAt(position)
         }
         notifyItemRangeRemoved(headerCount + position, itemCount)
+    }
+
+    @JvmOverloads
+    fun updateDataItem(dataItem: Any?, tag: String = AdapterDelegate.DEFAULT_TAG) {
+        if (dataItem == null) {
+            return
+        }
+
+        dataItems.forEachIndexed { index, item ->
+            if (item is ItemData && dataItem == item.data && tag == item.tag) {
+                notifyItemChanged(headerCount + index)
+            } else if (dataItem == item) {
+                notifyItemChanged(headerCount + index)
+            }
+        }
     }
 
     fun getDataItems() = dataItems
